@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Morning OS">
+<title>Morning OS — Harssh</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0ede6;
+    --text2: #888880;
+    --text3: #555550;
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --green: #4caf7d;
+    --red: #e05a5a;
+    --amber: #e0a050;
+    --blue: #5a9be0;
+    --accent: #c9a84c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; overscroll-behavior: none; }
+
+  body { padding: 0 0 80px; }
+
+  .top-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 20px 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .top-bar-left { }
+  .top-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--gold); letter-spacing: 0.02em; }
+  .top-date { font-size: 10px; color: var(--text3); margin-top: 2px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .refresh-btn {
+    background: none; border: 0.5px solid var(--border2); color: var(--text2);
+    font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px;
+    border-radius: 6px; cursor: pointer; letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .refresh-btn:active { background: var(--bg3); color: var(--gold); border-color: var(--gold); transform: scale(0.97); }
+  .refresh-btn.loading { color: var(--gold); border-color: var(--gold); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .page { padding: 0 20px; }
+
+  .section { margin-top: 28px; }
+  .section-label {
+    font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+
+  .card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .card + .card { margin-top: 8px; }
+
+  /* Quote */
+  .quote-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px; line-height: 1.55;
+    color: var(--text); font-style: italic;
+  }
+  .quote-src {
+    font-size: 10px; color: var(--gold);
+    margin-top: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .quote-bar { width: 28px; height: 2px; background: var(--gold); border-radius: 2px; margin-bottom: 12px; }
+
+  /* Checklist */
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 0.5px solid var(--border);
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .check-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .check-item:first-child { padding-top: 0; }
+  .check-box {
+    width: 20px; height: 20px; flex-shrink: 0;
+    border: 0.5px solid var(--border2); border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-size: 12px;
+  }
+  .check-box.done { background: var(--green); border-color: var(--green); }
+  .check-label { font-size: 13px; color: var(--text); transition: all 0.2s; line-height: 1.4; }
+  .check-label.done { color: var(--text3); text-decoration: line-through; }
+
+  /* Mindset */
+  .mindset-item {
+    display: flex; gap: 10px; padding: 9px 0;
+    border-bottom: 0.5px solid var(--border); align-items: flex-start;
+  }
+  .mindset-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .mindset-item:first-child { padding-top: 0; }
+  .mindset-n { font-size: 9px; color: var(--gold); min-width: 14px; margin-top: 3px; letter-spacing: 0.06em; }
+  .mindset-text { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+  /* AI Brief */
+  .brief-text { font-size: 13px; line-height: 1.75; color: var(--text2); }
+  .brief-text strong { color: var(--gold2); font-weight: 500; }
+  .brief-loading { font-size: 12px; color: var(--text3); letter-spacing: 0.04em; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .blink { animation: blink 1.2s infinite; }
+
+  /* Workout */
+  .workout-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .workout-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .workout-row:first-child { padding-top: 0; }
+  .workout-name { font-size: 13px; color: var(--text); }
+  .workout-detail { font-size: 11px; color: var(--text3); text-align: right; }
+
+  /* Market */
+  .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .metric-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .metric-label { font-size: 9px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--text); }
+  .metric-change { font-size: 11px; margin-top: 3px; }
+  .up { color: var(--green); }
+  .dn { color: var(--red); }
+
+  .stock-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .stock-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .stock-row:first-child { padding-top: 0; }
+  .stock-left { }
+  .stock-name { font-size: 13px; color: var(--text); }
+  .stock-ticker { font-size: 10px; color: var(--text3); margin-top: 1px; letter-spacing: 0.04em; }
+  .stock-right { text-align: right; }
+  .stock-price { font-size: 13px; color: var(--text); }
+  .stock-chg { font-size: 11px; margin-top: 1px; }
+
+  /* Shortcut install banner */
+  .install-banner {
+    margin: 28px 0 0;
+    background: linear-gradient(135deg, #1a1500 0%, #111 100%);
+    border: 0.5px solid rgba(201,168,76,0.3);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .install-title { font-size: 11px; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .install-step { display: flex; gap: 10px; padding: 6px 0; font-size: 12px; color: var(--text2); line-height: 1.5; }
+  .install-num { color: var(--gold); min-width: 16px; font-size: 10px; margin-top: 2px; }
+
+  /* fade in animation */
+  .fade-in { opacity: 0; animation: fadeUp 0.4s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .d1{animation-delay:0.05s} .d2{animation-delay:0.1s} .d3{animation-delay:0.15s}
+  .d4{animation-delay:0.2s} .d5{animation-delay:0.25s} .d6{animation-delay:0.3s}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-title">Morning OS</div>
+    <div class="top-date" id="top-date">—</div>
+  </div>
+  <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">↺ Refresh</button>
+</div>
+
+<div class="page">
+
+  <div class="section fade-in d1">
+    <div class="section-label">Daily Dharma</div>
+    <div class="card" id="quote-card">
+      <div class="quote-bar"></div>
+      <div class="quote-text" id="quote-text">Loading...</div>
+      <div class="quote-src" id="quote-src"></div>
+    </div>
+  </div>
+
+  <div class="section fade-in d2">
+    <div class="section-label">Morning Checklist</div>
+    <div class="card" id="checklist-card"></div>
+  </div>
+
+  <div class="section fade-in d3">
+    <div class="section-label">AI Daily Brief</div>
+    <div class="card" id="brief-card">
+      <div class="brief-loading blink">Generating your brief...</div>
+    </div>
+  </div>
+
+  <div class="section fade-in d4">
+    <div class="section-label">Today's Mindset</div>
+    <div class="card" id="mindset-card"></div>
+  </div>
+
+  <div class="section fade-in d5">
+    <div class="section-label">Workout — Push Day</div>
+    <div class="card" id="workout-card"></div>
+  </div>
+
+  <div class="section fade-in d6">
+    <div class="section-label">Market Brief — Wall St.</div>
+    <div class="metric-grid" id="metric-grid"></div>
+    <div class="card" id="stocks-card"></div>
+  </div>
+
+  <div class="install-banner fade-in d6">
+    <div class="install-title">iPhone Shortcut Setup</div>
+    <div class="install-step"><span class="install-num">1</span><span>Open this file in Safari on your iPhone</span></div>
+    <div class="install-step"><span class="install-num">2</span><span>Tap the Share icon → "Add to Home Screen" → name it "Morning OS"</span></div>
+    <div class="install-step"><span class="install-num">3</span><span>Open Shortcuts app → Automation → + → Time of Day → 4:50 AM → Weekdays</span></div>
+    <div class="install-step"><span class="install-num">4</span><span>Add Action: "Open App" → Safari. Then "Open URLs" → paste this file's URL</span></div>
+    <div class="install-step"><span class="install-num">5</span><span>Toggle "Run Immediately" ON → Done. Alarm: set separately in Clock app at 4:50 AM</span></div>
+  </div>
+
+</div>
+
+<script>
+const QUOTES = [
+  { text: "You have the right to perform your actions, but never to the fruits of your actions. Do not let the fruits of action be your motive.", src: "Bhagavad Gita 2.47" },
+  { text: "Arise, awake, and stop not until the goal is reached.", src: "Swami Vivekananda" },
+  { text: "He who has conquered his own mind — his mind is his best friend. For one who has failed to do so, his very mind will be his greatest enemy.", src: "Bhagavad Gita 6.6" },
+  { text: "The soul is neither born nor does it ever die. It is unborn, eternal, ever-existing, undying and primeval.", src: "Bhagavad Gita 2.20" },
+  { text: "Strength is life, weakness is death. Expansion is life, contraction is death. Love is life, hatred is death.", src: "Swami Vivekananda" },
+  { text: "Even a little practice of this Dharma saves one from the great fear of repeated birth and death.", src: "Bhagavad Gita 2.40" },
+  { text: "Truth alone triumphs, not falsehood. By truth is laid the path leading to the divine.", src: "Mundaka Upanishad" },
+  { text: "The greatest sin is to think yourself weak. Never think there is anything impossible for the soul.", src: "Swami Vivekananda" },
+  { text: "Let noble thoughts come to us from every side.", src: "Rigveda 1.89.1" },
+  { text: "It is better to live your own destiny imperfectly than to live an imitation of somebody else's life with perfection.", src: "Bhagavad Gita 3.35" },
+  { text: "Lokah Samastah Sukhino Bhavantu — may all beings everywhere be happy and free.", src: "Ancient Sanskrit mantra" },
+  { text: "A man is made by his belief. As he believes, so he is.", src: "Bhagavad Gita 17.3" },
+  { text: "Whatever happened, happened for good. Whatever is happening, is happening for good. Whatever will happen, will also happen for good.", src: "Bhagavad Gita" },
+  { text: "The self is a friend to the one who has conquered oneself. But for the person who has not conquered himself, the self acts as an enemy.", src: "Bhagavad Gita 6.5" }
+];
+
+const CHECKLIST = [
+  "Hydrate — 500ml water immediately",
+  "No phone scrolling for first 15 min",
+  "Review top 3 priorities for today",
+  "5-min stream of consciousness journal",
+  "Stretch / movement warm-up",
+  "Cold water face wash — activate",
+  "Read today's brief and set intention"
+];
+
+const MINDSET = [
+  "Build in silence. Announce with results.",
+  "Every rep, every line of code, every dollar invested is compounding. Trust the system.",
+  "Do not react to noise today. Respond only to what moves the needle.",
+  "One focused hour beats three distracted ones. Guard your mornings.",
+  "You are not behind. You are building the foundation most people skip entirely."
+];
+
+const WORKOUT = [
+  { name: "Barbell Bench Press", detail: "4 × 6–8 reps  |  85% 1RM" },
+  { name: "Incline DB Press", detail: "3 × 10–12 reps  |  controlled" },
+  { name: "Overhead Press", detail: "4 × 6–8 reps  |  strict form" },
+  { name: "Cable Lateral Raises", detail: "3 × 15 reps  |  slow eccentric" },
+  { name: "Tricep Rope Pushdown", detail: "3 × 12–15 reps" },
+  { name: "Face Pulls", detail: "3 × 15 reps  |  shoulder health" },
+  { name: "Hanging Leg Raises", detail: "3 × 15 reps  |  core finisher" }
+];
+
+const STOCKS = [
+  { name: "S&P 500",   ticker: "SPX",   price: "5,304", change: "+0.41%", up: true },
+  { name: "Dow Jones", ticker: "DJI",   price: "42,654", change: "+0.28%", up: true },
+  { name: "NASDAQ",    ticker: "COMP",  price: "18,331", change: "+0.54%", up: true },
+  { name: "Apple",     ticker: "AAPL",  price: "189.42", change: "-0.31%", up: false },
+  { name: "NVIDIA",    ticker: "NVDA",  price: "1,064",  change: "+2.14%", up: true },
+  { name: "Tesla",     ticker: "TSLA",  price: "174.20", change: "-1.07%", up: false },
+  { name: "Amazon",    ticker: "AMZN",  price: "183.65", change: "+0.89%", up: true },
+  { name: "Microsoft", ticker: "MSFT",  price: "415.30", change: "+0.62%", up: true },
+  { name: "Gold",      ticker: "XAUUSD",price: "2,340",  change: "+0.18%", up: true },
+  { name: "VIX",       ticker: "VIX",   price: "13.42",  change: "-4.20%", up: false }
+];
+
+function setDate() {
+  const d = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('top-date').textContent = d.toLocaleDateString('en-US', opts).toUpperCase();
+}
+
+function loadQuote() {
+  const d = new Date();
+  const idx = (d.getDate() + d.getMonth()) % QUOTES.length;
+  const q = QUOTES[idx];
+  document.getElementById('quote-text').textContent = '"' + q.text + '"';
+  document.getElementById('quote-src').textContent = '— ' + q.src;
+}
+
+function loadChecklist() {
+  const el = document.getElementById('checklist-card');
+  el.innerHTML = CHECKLIST.map((item, i) => `
+    <div class="check-item" onclick="toggleCheck(${i})" id="ci-${i}">
+      <div class="check-box" id="cb-${i}"></div>
+      <span class="check-label" id="cl-${i}">${item}</span>
+    </div>`).join('');
+}
+
+function toggleCheck(i) {
+  const cb = document.getElementById('cb-' + i);
+  const cl = document.getElementById('cl-' + i);
+  const done = cb.classList.toggle('done');
+  cl.classList.toggle('done', done);
+  cb.textContent = done ? '✓' : '';
+}
+
+function loadMindset() {
+  document.getElementById('mindset-card').innerHTML = MINDSET.map((t, i) =>
+    `<div class="mindset-item">
+      <span class="mindset-n">${String(i+1).padStart(2,'0')}</span>
+      <span class="mindset-text">${t}</span>
+    </div>`).join('');
+}
+
+function loadWorkout() {
+  document.getElementById('workout-card').innerHTML = WORKOUT.map(w =>
+    `<div class="workout-row">
+      <div class="workout-name">${w.name}</div>
+      <div class="workout-detail">${w.detail}</div>
+    </div>`).join('');
+}
+
+function loadMarket() {
+  const spx = STOCKS[0], ndx = STOCKS[2];
+  document.getElementById('metric-grid').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">S&amp;P 500</div>
+      <div class="metric-value">${spx.price}</div>
+      <div class="metric-change up">${spx.change}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">NASDAQ</div>
+      <div class="metric-value">${ndx.price}</div>
+      <div class="metric-change up">${ndx.change}</div>
+    </div>`;
+
+  document.getElementById('stocks-card').innerHTML = STOCKS.map(s =>
+    `<div class="stock-row">
+      <div class="stock-left">
+        <div class="stock-name">${s.name}</div>
+        <div class="stock-ticker">${s.ticker}</div>
+      </div>
+      <div class="stock-right">
+        <div class="stock-price">${s.price}</div>
+        <div class="stock-chg ${s.up ? 'up' : 'dn'}">${s.change}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function loadBrief() {
+  const el = document.getElementById('brief-card');
+  el.innerHTML = '<div class="brief-loading blink">Generating your brief...</div>';
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  btn.textContent = '↺ Loading';
+
+  const d = new Date();
+  const day = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: `You are Harssh's personal morning advisor. He is 27, Cost Engineer in Richfield Ohio at Winar Connection, on H1B visa, deeply analytical and ambitious. He is building toward: quant/algo trading system (Python, Alpaca), multi-vertical business (wire harness manufacturing, aerospace parts, AI consulting), and financial independence. He values solitude, systems, discipline, quiet ambition, and execution over planning. He practices Vedic astrology — Jupiter is exalted in Cancer conjunct his natal Moon right now through mid-2027, making this his peak 12-year window for expansion. He is vegetarian, lifts heavy, boxes, does sauna and cold plunge. His recurring challenge is deep research without execution — he plans extensively but struggles to ship. Respond in tight, direct, high-agency tone. No fluff, no em dashes, no motivational clichés. Be specific and honest.`,
+        messages: [{
+          role: "user",
+          content: `Today is ${day}. Write Harssh's morning brief in exactly this structure:
+
+FOCUS DIRECTIVE
+One sharp sentence: the single most important thing to move forward today (be specific — trading system, career leverage, business, or health system).
+
+EXECUTION AUDIT
+One honest sentence about where he is likely stalling or overthinking right now. Be direct, not gentle.
+
+WIN THE MORNING
+One specific micro-action he can complete before 6am that creates momentum.
+
+JUPITER WINDOW
+One sentence reminding him this is his peak expansion window and what that means for today's action.
+
+Keep total response under 180 words. Use the exact headers above. No asterisks. No em dashes.`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content[0].text;
+
+    el.innerHTML = `<div class="brief-text">${
+      text
+        .replace(/^(FOCUS DIRECTIVE|EXECUTION AUDIT|WIN THE MORNING|JUPITER WINDOW)$/gm,
+          '<strong>$1</strong>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>')
+    }</div>`;
+  } catch(err) {
+    el.innerHTML = `<div class="brief-text">
+      <strong>FOCUS DIRECTIVE</strong><br>
+      Pick one task from your trading system or business plan and ship a real output today — a working script, a sent email, a filed document.<br><br>
+      <strong>EXECUTION AUDIT</strong><br>
+      You have built frameworks for six months. The gap is not knowledge — it is reps. Today ships something.<br><br>
+      <strong>WIN THE MORNING</strong><br>
+      Open your Python environment right now and write 10 lines of real code for your trading system before breakfast.<br><br>
+      <strong>JUPITER WINDOW</strong><br>
+      Jupiter exalted conjunct your natal Moon is the best transit of your decade — it rewards bold moves, not careful plans.
+    </div>`;
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent = '↺ Refresh';
+}
+
+function loadAll() {
+  setDate();
+  loadQuote();
+  loadChecklist();
+  loadMindset();
+  loadWorkout();
+  loadMarket();
+  loadBrief();
+}
+
+loadAll();
+</script>
+</body>
+</html>
